@@ -1,5 +1,4 @@
 import agents.LogicalAgent;
-import sun.rmi.runtime.Log;
 
 public class Part1 {
     public static void main(String[] args) {

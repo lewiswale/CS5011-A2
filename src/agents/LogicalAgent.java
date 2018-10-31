@@ -33,7 +33,7 @@ public class LogicalAgent {
         currentX = x;
         currentY = y;
         KnowledgeSpace current = knowledge[x][y];
-        System.out.println("Selective Point Inspection on (" + y + ", " + x + ")");
+        System.out.println("Single Point Inspection on (" + y + ", " + x + ")");
 
         if (current.getValue().equals("x")) {
             if (x == 0 && y == 0) {
