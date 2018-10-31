@@ -2,14 +2,15 @@ package agents;
 
 import java.util.Random;
 
-public class SinglePointAgent {
+public class LogicalAgent {
     private int lives;
     private int daggerCount;
     private int daggersFound;
     private String[][] map;
     private KnowledgeSpace[][] knowledge;
+    private int currentX, currentY;
 
-    public SinglePointAgent(String[][] map) {
+    public LogicalAgent(String[][] map) {
         this.lives = 1;
         this.map = map;
         this.knowledge = new KnowledgeSpace[map.length][map[0].length];
@@ -26,6 +27,65 @@ public class SinglePointAgent {
 
         this.daggerCount = daggers;
         this.daggersFound = 0;
+    }
+
+    public boolean makeMove(int x, int y) {
+        currentX = x;
+        currentY = y;
+        KnowledgeSpace current = knowledge[x][y];
+        System.out.println("Selective Point Inspection on (" + y + ", " + x + ")");
+
+        if (current.getValue().equals("x")) {
+            if (x == 0 && y == 0) {
+                current.setValue(map[x][y]);
+                inspectValue(current);
+                current.setInspected(true);
+                return true;
+            }
+
+            if (!current.isInspected()) {
+                if (AllFreeNeighbours(current)) {
+                    current.setValue(map[x][y]);
+                    inspectValue(current);
+                    current.setInspected(true);
+                    return true;
+                } else if (AllMarkedNeighbours(current)){
+                    current.setValue("D");
+                    current.setFlagged(true);
+                    daggersFound++;
+                    System.out.println("Flagged a dagger.");
+                    return true;
+                }
+            }
+        } else {
+            inspectValue(current);
+            current.setInspected(true);
+            return false;
+        }
+
+        return false;
+    }
+
+    public boolean randomProbe() {
+        Random r = new Random();
+        int x = r.nextInt(knowledge.length);
+        int y = r.nextInt(knowledge.length);
+
+        currentX = x;
+        currentY = y;
+
+        System.out.println("Random Probe at (" + y + ", " + x + ")");
+
+        KnowledgeSpace current = knowledge[x][y];
+
+        if (current.getValue().equals("x")) {
+            current.setValue(map[x][y]);
+            inspectValue(current);
+            current.setInspected(true);
+            return true;
+        }
+
+        return false;
     }
 
     public boolean isComplete() {
@@ -63,75 +123,6 @@ public class SinglePointAgent {
                 }
             }
         }
-    }
-
-    public void makeSinglePointCheck(int x, int y) {
-        System.out.println("Inspect (" + y + ", " + x + ")");
-        KnowledgeSpace current = knowledge[x][y];
-
-        if (current.getValue().equals("x")) {
-            current.setValue(map[x][y]);
-        }
-
-        if (!current.getValue().equals("D") && !current.isInspected()) {
-            current.setInspected(true);
-            boolean isClue = inspectValue(current);
-
-            if (isClue) {
-                int clue = Integer.parseInt(current.getValue());
-
-                if (clue == countFlaggedNeighbours(current)) {
-                    revealNeighbours(current.getX(), current.getY());
-                } else if (clue == countCoveredAndFlaggedNeighbours(current)) {
-                    flagCoveredNeighbours(current);
-                }
-
-            }
-        }
-    }
-
-    public void makeMove(int x, int y) {
-        KnowledgeSpace current = knowledge[x][y];
-        System.out.println("Inspecting " + y + ", " + x);
-
-        if (current.getValue().equals("x")) {
-            if (x == 0 && y == 0) {
-                current.setValue(map[x][y]);
-                current.setInspected(true);
-                inspectValue(current);
-            }
-
-            if (!current.isInspected()) {
-                if (AllFreeNeighbours(current)) {
-                    current.setValue(map[x][y]);
-                    current.setInspected(true);
-                    inspectValue(current);
-                } else if (AllMarkedNeighbours(current)){
-                    current.setValue("D");
-                    current.setFlagged(true);
-                }
-            }
-        } else {
-            inspectValue(current);
-            current.setInspected(true);
-        }
-    }
-
-    public boolean randomProbe() {
-        Random r = new Random();
-        int x = r.nextInt(knowledge.length);
-        int y = r.nextInt(knowledge.length);
-
-        KnowledgeSpace current = knowledge[x][y];
-
-        if (current.getValue().equals("x")) {
-            current.setValue(map[x][y]);
-            current.setInspected(true);
-            inspectValue(current);
-            return true;
-        }
-
-        return false;
     }
 
     public boolean AllMarkedNeighbours(KnowledgeSpace current) {
@@ -190,49 +181,36 @@ public class SinglePointAgent {
     }
 
     public boolean inspectValue(KnowledgeSpace space) {
-        boolean isClue = false;
-
         if (space.getValue().equals("d")) {
-            lives--;
-            daggersFound++;
-            return isClue;
+            if (!space.isInspected()) {
+                System.out.println("Dagger found. -1 Lives.");
+                lives--;
+                daggersFound++;
+            }
+            return false;
         }
 
         if (space.getValue().equals("g")) {
-            lives++;
-            revealNeighbours(space.getX(), space.getY());
-            return isClue;
+            if (!space.isInspected()) {
+                System.out.println("Gold found! +1 Lives.");
+                lives++;
+                revealNeighbours(space.getX(), space.getY());
+            }
+            return false;
         }
 
         if (space.getValue().equals("0")) {
-            revealNeighbours(space.getX(), space.getY());
-            return isClue;
-        }
-
-        isClue = true;
-        return isClue;
-    }
-
-    public int countCoveredAndFlaggedNeighbours(KnowledgeSpace space) {
-        int x = space.getX();
-        int y = space.getY();
-        int count = 0;
-
-        int xStart = Math.max(x-1, 0);
-        int yStart = Math.max(y-1, 0);
-        int xEnd = Math.min(x+1, knowledge.length-1);
-        int yEnd = Math.min(y+1, knowledge.length-1);
-
-        for (int i = xStart; i <= xEnd; i++) {
-            for (int j = yStart; j <= yEnd; j++) {
-                if (knowledge[i][j].getValue().equals("x") || knowledge[i][j].getValue().equals("D")
-                || knowledge[i][j].getValue().equals("d")) {
-                    count++;
-                }
+            if (!space.isInspected()) {
+                revealNeighbours(space.getX(), space.getY());
             }
+            return false;
         }
 
-        return count;
+        if (space.getValue().equals("D")) {
+            return false;
+        }
+
+        return true;
     }
 
     public int countCoveredNeighbours(KnowledgeSpace space) {
@@ -256,25 +234,6 @@ public class SinglePointAgent {
         return count;
     }
 
-    public void flagCoveredNeighbours(KnowledgeSpace space) {
-        int x = space.getX();
-        int y = space.getY();
-
-        int xStart = Math.max(x-1, 0);
-        int yStart = Math.max(y-1, 0);
-        int xEnd = Math.min(x+1, knowledge.length-1);
-        int yEnd = Math.min(y+1, knowledge.length-1);
-
-        for (int i = xStart; i <= xEnd; i++) {
-            for (int j = yStart; j <= yEnd; j++) {
-                if (knowledge[i][j].getValue().equals("x")) {
-                    knowledge[i][j].setFlagged(true);
-                    knowledge[i][j].setValue("D");
-                }
-            }
-        }
-    }
-
     public int countFlaggedNeighbours(KnowledgeSpace space) {
         int x = space.getX();
         int y = space.getY();
@@ -296,13 +255,25 @@ public class SinglePointAgent {
         return count;
     }
 
+    public int getLives() {
+        return lives;
+    }
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("========================\n");
 
         for (int i = 0; i < knowledge.length; i++) {
             for (int j = 0; j < knowledge[0].length; j++) {
-                sb.append(knowledge[i][j].getValue());
+                if (i == currentX && j == currentY) {
+                    sb.append("[");
+                    sb.append(knowledge[i][j].getValue());
+                    sb.append("]");
+                } else {
+                    sb.append(" ");
+                    sb.append(knowledge[i][j].getValue());
+                    sb.append(" ");
+                }
                 sb.append("\t");
             }
             sb.append("\t\n");
