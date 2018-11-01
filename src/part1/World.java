@@ -1,4 +1,4 @@
-/*
+package part1;/*
  * Worlds to be used for Assignment A2
  * author: Alice Toniolo
  *

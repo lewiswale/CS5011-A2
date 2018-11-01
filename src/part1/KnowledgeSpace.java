@@ -1,4 +1,4 @@
-package agents;
+package part1;
 
 public class KnowledgeSpace {
     private String value;

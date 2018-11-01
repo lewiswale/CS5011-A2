@@ -1,12 +1,12 @@
-import agents.LogicalAgent;
+package part1;
 
-public class Part1 {
+public class Logic1 {
     public static void main(String[] args) {
         World w = World.EASY1;
         System.out.println("Map to be used:\n");
         System.out.println(w);
 
-        LogicalAgent agent = new LogicalAgent(w.map);
+        SPSAgent agent = new SPSAgent(w.map);
 
         System.out.println("RANDOM PROBE");
         System.out.println("========================");
@@ -17,7 +17,7 @@ public class Part1 {
 
         winOrLose(agent);
 
-        agent = new LogicalAgent(w.map);
+        agent = new SPSAgent(w.map);
 
         System.out.println("\nSINGLE POINT STRATEGY\n========================");
 
@@ -52,10 +52,12 @@ public class Part1 {
 
         System.out.println("FINAL OUTCOME");
         System.out.println(agent);
+        System.out.println("========================");
+        System.out.println("Actual map for comparison...");
         System.out.println(w);
     }
 
-    public static void winOrLose(LogicalAgent agent) {
+    public static void winOrLose(SPSAgent agent) {
         if (agent.getLives() == 0) {
             System.out.println("NO MORE LIVES. YOU LOST.");
         } else {

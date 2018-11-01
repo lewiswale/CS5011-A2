@@ -1,8 +1,10 @@
-package agents;
+package part2;
+
+import part1.KnowledgeSpace;
 
 import java.util.Random;
 
-public class LogicalAgent {
+public class ATSAgent {
     private int lives;
     private int daggerCount;
     private int daggersFound;
@@ -10,7 +12,7 @@ public class LogicalAgent {
     private KnowledgeSpace[][] knowledge;
     private int currentX, currentY;
 
-    public LogicalAgent(String[][] map) {
+    public ATSAgent(String[][] map) {
         this.lives = 1;
         this.map = map;
         this.knowledge = new KnowledgeSpace[map.length][map[0].length];
