@@ -90,7 +90,7 @@ public class ATSAgent {
         System.out.println();
         parseDIMACS(KBU);
         if (!checkSafeProbe()) {
-            randomProbe();
+            while (!randomProbe()) {}
         }
     }
 
@@ -131,6 +131,8 @@ public class ATSAgent {
                 System.out.println("========================");
             }
         }
+        System.out.println("Cannot be certain any cell is safe. Must resort to random probe.");
+        System.out.println("========================");
         return false;
     }
 
@@ -337,11 +339,11 @@ public class ATSAgent {
         currentX = x;
         currentY = y;
 
-        System.out.println("Random Probe at (" + y + ", " + x + ")");
 
         KnowledgeSpace current = knowledge[x][y];
 
         if (current.getValue().equals("x")) {
+            System.out.println("Random Probe at (" + y + ", " + x + ")");
             current.setValue(map[x][y]);
             inspectValue(current);
             current.setInspected(true);
