@@ -7,14 +7,13 @@ import org.logicng.io.parsers.PropositionalParser;
 import org.sat4j.specs.ContradictionException;
 import org.sat4j.specs.TimeoutException;
 import part1.World;
-
 public class Logic2 {
     public static void main(String[] args) throws ParserException, TimeoutException, ContradictionException {
-        World w = World.HARD1;
+        World w = World.HARD10;
         ATSAgent agent = new ATSAgent(w.map);
 
+        System.out.println("\nSINGLE POINT AND SATISFIABILITY TEST STRATEGY\n========================");
         while (!agent.isComplete()) {
-            System.out.println("\nSINGLE POINT STRATEGY\n========================");
 
             boolean moveMadeInLoop = false;
 
@@ -32,7 +31,11 @@ public class Logic2 {
                 }
             }
 
-            agent.makeATSMove();
+            if (!moveMadeInLoop) {
+                agent.makeATSMove();
+                System.out.println(agent);
+                System.out.println("========================");
+            }
         }
 
         System.out.println("FINAL OUTCOME");

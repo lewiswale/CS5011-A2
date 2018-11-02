@@ -22,7 +22,7 @@ public class ATSAgent {
     private String[][] map;
     private KnowledgeSpace[][] knowledge;
     private int currentX, currentY;
-    private ArrayList<String> literals = new ArrayList<>();
+    private ArrayList<Literal> literals = new ArrayList<>();
     private ArrayList<ArrayList<Integer>> clauses = new ArrayList<>();
 
     public ATSAgent(String[][] map) {
@@ -87,54 +87,11 @@ public class ATSAgent {
         String KBU = buildKBU();
         System.out.println("KBU in DIMACS form:");
         System.out.println(KBU);
+        System.out.println();
         parseDIMACS(KBU);
         if (!checkSafeProbe()) {
             randomProbe();
         }
-    }
-
-    public boolean checkCellForDagger() throws ContradictionException, TimeoutException {
-        for (int n = 0; n < literals.size(); n++) {
-            if (n > 0) {
-                clauses.remove(clauses.size() - 1);
-            }
-            ArrayList<Integer> aim = new ArrayList<>();
-            aim.add((n + 1)*-1);
-            clauses.add(aim);
-
-            ISolver solver = SolverFactory.newDefault();
-            solver.newVar(literals.size());
-            solver.setExpectedNumberOfClauses(clauses.size());
-
-            for (int i = 0; i < clauses.size(); i++) {
-                ArrayList clause = clauses.get(i);
-                int[] arrayClause = new int[clause.size()];
-                for (int j = 0; j < clause.size(); j++) {
-                    arrayClause[j] = (int) clause.get(j);
-                }
-                solver.addClause(new VecInt(arrayClause));
-            }
-
-            IProblem problem = solver;
-
-            if (!problem.isSatisfiable()) {
-                System.out.println("not satisfiable");
-                flagCell(n);
-                return true;
-            } else {
-                System.out.println("satisfiable");
-            }
-        }
-        return false;
-    }
-
-    public void flagCell(int n) {
-        String literal = literals.get(n);
-        String[] split = literal.split("_");
-        int x = Integer.parseInt(split[1]);
-        int y = Integer.parseInt(split[2]);
-        knowledge[y][x].setValue("D");
-        knowledge[y][x].setFlagged(true);
     }
 
     public boolean checkSafeProbe() throws TimeoutException, ContradictionException {
@@ -161,25 +118,32 @@ public class ATSAgent {
 
             IProblem problem = solver;
 
+            System.out.println("========================");
+            System.out.println("Proving ~D(" + literals.get(n).x + ", " + literals.get(n).y + ")");
+
             if (!problem.isSatisfiable()) {
-                System.out.println("not satisfiable");
+                System.out.println("Formula is NOT satisfiable. Cell is safe.");
+                System.out.println("========================");
                 probeCell(n);
                 return true;
             } else {
-                System.out.println("satisfiable");
+                System.out.println("Formula is satisfiable. Cannot be sure cell is safe.");
+                System.out.println("========================");
             }
         }
         return false;
     }
 
     public void probeCell(int n) {
-        String literal = literals.get(n);
-        String[] split = literal.split("_");
-        int x = Integer.parseInt(split[1]);
-        int y = Integer.parseInt(split[2]);
-        knowledge[y][x].setValue(map[y][x]);
-        inspectValue(knowledge[y][x]);
-        knowledge[y][x].setInspected(true);
+        Literal literal = literals.get(n);
+        int x = literal.x;
+        int y = literal.y;
+        currentX = x;
+        currentY = y;
+        System.out.println("Satisfiabilty Test Inspection on (" + y + ", " + x + ")");
+        knowledge[x][y].setValue(map[x][y]);
+        inspectValue(knowledge[x][y]);
+        knowledge[x][y].setInspected(true);
     }
 
     public void parseDIMACS(String cnf) {
@@ -260,7 +224,7 @@ public class ATSAgent {
         System.out.println("Unique Literals: ");
 
         for (int i = 0; i < literals.size(); i++) {
-            System.out.println((i+1) + ": " + literals.get(i));
+            System.out.println((i+1) + ": " + literals.get(i).name);
         }
 
         System.out.println("Before CNF:");
@@ -273,7 +237,7 @@ public class ATSAgent {
         boolean buildingLiteral = false;
         for (int i = 0; i < cnf.length(); i++) {
             char currentChar = cnf.charAt(i);
-            if (currentChar == 'D') {
+            if (currentChar == '@') {
                 buildingLiteral = true;
                 sb = new StringBuilder();
             }
@@ -284,9 +248,12 @@ public class ATSAgent {
                 } else {
                     buildingLiteral = false;
                     String currentLiteral = sb.toString();
-                    if (literals.contains(currentLiteral)) {
-                        cnf = cnf.substring(0, i - currentLiteral.length()) + (literals.indexOf(currentLiteral)+1) + cnf.substring(i);
-                        i -= currentLiteral.length();
+                    for (int j = 0; j < literals.size(); j++) {
+                        if (literals.get(j).name.equals(currentLiteral)) {
+                            cnf = cnf.substring(0, i - currentLiteral.length()) + (j+1) + cnf.substring(i);
+                            i -= currentLiteral.length();
+                            break;
+                        }
                     }
                 }
             }
@@ -304,17 +271,29 @@ public class ATSAgent {
         int xEnd = Math.min(x+1, knowledge.length-1);
         int yEnd = Math.min(y+1, knowledge.length-1);
 
-        ArrayList<String> vars = new ArrayList<>();
+        ArrayList<Literal> vars = new ArrayList<>();
 
         for (int i = xStart; i <= xEnd; i++) {
             for (int j = yStart; j <= yEnd; j++) {
                 KnowledgeSpace neighbour = knowledge[i][j];
                 if (neighbour.getValue().equals("x")) {
-                    String var = "D" + "_" + j + "_" + i;
-                    vars.add(var);
-                    if (!literals.contains(var)) {
-                        literals.add(var);
+                    Literal literal = new Literal();
+                    literal.x = i;
+                    literal.y = j;
+                    boolean matchFound = false;
+                    for (int k = 0; k < literals.size(); k++) {
+                        Literal l = literals.get(k);
+                        if (l.x == literal.x && l.y == literal.y) {
+                            literal.name = l.name;
+                            matchFound = true;
+                            break;
+                        }
                     }
+                    if (!matchFound) {
+                        literal.name = "@RESERVED_CNF_" + literals.size();
+                        literals.add(literal);
+                    }
+                    vars.add(literal);
                 }
             }
         }
@@ -329,7 +308,7 @@ public class ATSAgent {
                 if (j != i) {
                     sb.append("~");
                 }
-                sb.append(vars.get(j));
+                sb.append(vars.get(j).name);
                 if (j < numberOfVars-1) {
                     sb.append(" & ");
                 }
