@@ -10,9 +10,12 @@ public class Logic1 {
 
         System.out.println("RANDOM PROBE");
         System.out.println("========================");
+        agent.makeMove(0, 0);
+        System.out.println(agent);
         while (!agent.isComplete()) {
-            agent.randomProbe();
-            System.out.println(agent);
+            if (agent.randomProbe()) {
+                System.out.println(agent);
+            }
         }
 
         winOrLose(agent);
@@ -42,8 +45,10 @@ public class Logic1 {
                 boolean newMoveMade = false;
                 while (!newMoveMade) {
                     newMoveMade = agent.randomProbe();
-                    System.out.println(agent);
-                    System.out.println("========================");
+                    if (newMoveMade) {
+                        System.out.println(agent);
+                        System.out.println("========================");
+                    }
                 }
             }
         }

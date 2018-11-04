@@ -8,6 +8,7 @@ public class SPSAgent {
     private String[][] map;
     private KnowledgeSpace[][] knowledge;
     private int currentX, currentY;
+    private int randomProbeCount = 0;
 
     public SPSAgent(String[][] map) {
         this.lives = 1;
@@ -81,6 +82,7 @@ public class SPSAgent {
             current.setValue(map[x][y]);
             inspectValue(current);
             current.setInspected(true);
+            randomProbeCount++;
             return true;
         }
 
@@ -93,12 +95,29 @@ public class SPSAgent {
         }
 
         boolean complete = true;
+        int coveredCount = 0;
 
         for (int i = 0; i < knowledge.length; i++) {
             for (int j = 0; j < knowledge[0].length; j++) {
                 if (knowledge[i][j].getValue().equals("x")) {
                     complete = false;
-                    return complete;
+                    coveredCount++;
+                }
+
+                if (knowledge[i][j].getValue().equals("D") || knowledge[i][j].getValue().equals("d")) {
+                    coveredCount++;
+                }
+            }
+        }
+
+        if (coveredCount == daggerCount) {
+            complete = true;
+            for (int i = 0; i < knowledge.length; i++) {
+                for (int j = 0; j < knowledge.length; j++) {
+                    if (knowledge[i][j].getValue().equals("x")) {
+                        knowledge[i][j].setValue("D");
+                        knowledge[i][j].setFlagged(true);
+                    }
                 }
             }
         }
@@ -117,6 +136,11 @@ public class SPSAgent {
                 if (knowledge[i][j].getValue().equals("x")) {
                     knowledge[i][j].setValue(map[i][j]);
                     if (knowledge[i][j].getValue().equals("0") || knowledge[i][j].getValue().equals("g")) {
+                        if (knowledge[i][j].getValue().equals("g")) {
+                            System.out.println("Gold found! +1 Lives.");
+                            lives++;
+                            knowledge[i][j].setInspected(true);
+                        }
                         revealNeighbours(knowledge[i][j].getX(), knowledge[i][j].getY());
                     }
                 }
@@ -281,6 +305,7 @@ public class SPSAgent {
         sb.append("\nDagger Count = " + daggerCount);
         sb.append("\nDaggers Found = " + daggersFound);
         sb.append("\nLives = " + lives);
+        sb.append("\nRandom Probes used = " + randomProbeCount);
 
         return sb.toString();
     }

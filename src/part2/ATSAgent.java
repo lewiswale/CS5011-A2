@@ -22,6 +22,8 @@ public class ATSAgent {
     private String[][] map;
     private KnowledgeSpace[][] knowledge;
     private int currentX, currentY;
+    private int randomProbeCount = 0;
+    private int ATSCount = 0;
     private ArrayList<Literal> literals = new ArrayList<>();
     private ArrayList<ArrayList<Integer>> clauses = new ArrayList<>();
 
@@ -119,11 +121,12 @@ public class ATSAgent {
             IProblem problem = solver;
 
             System.out.println("========================");
-            System.out.println("Proving ~D(" + literals.get(n).x + ", " + literals.get(n).y + ")");
+            System.out.println("Proving ~D(" + literals.get(n).y + ", " + literals.get(n).x + ")");
 
             if (!problem.isSatisfiable()) {
                 System.out.println("Formula is NOT satisfiable. Cell is safe.");
                 System.out.println("========================");
+                ATSCount++;
                 probeCell(n);
                 return true;
             } else {
@@ -146,6 +149,7 @@ public class ATSAgent {
         knowledge[x][y].setValue(map[x][y]);
         inspectValue(knowledge[x][y]);
         knowledge[x][y].setInspected(true);
+        System.out.println(this);
     }
 
     public void parseDIMACS(String cnf) {
@@ -347,6 +351,7 @@ public class ATSAgent {
             current.setValue(map[x][y]);
             inspectValue(current);
             current.setInspected(true);
+            randomProbeCount++;
             return true;
         }
 
@@ -547,6 +552,8 @@ public class ATSAgent {
         sb.append("\nDagger Count = " + daggerCount);
         sb.append("\nDaggers Found = " + daggersFound);
         sb.append("\nLives = " + lives);
+        sb.append("\nATS moves made = " + ATSCount);
+        sb.append("\nRandom moves made = " + randomProbeCount);
 
         return sb.toString();
     }
