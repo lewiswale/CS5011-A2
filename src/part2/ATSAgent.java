@@ -27,6 +27,10 @@ public class ATSAgent {
     private ArrayList<Literal> literals = new ArrayList<>();
     private ArrayList<ArrayList<Integer>> clauses = new ArrayList<>();
 
+    /**
+     * Constructor for ATS Agent
+     * @param map map agent will solve
+     */
     public ATSAgent(String[][] map) {
         this.lives = 1;
         this.map = map;
@@ -46,6 +50,12 @@ public class ATSAgent {
         this.daggersFound = 0;
     }
 
+    /**
+     * Make Single Point move
+     * @param x x-coordinate for given cell
+     * @param y y-coordinate for given cell
+     * @return true if move was made, false otherwise
+     */
     public boolean makeSPSMove(int x, int y) {
         currentX = x;
         currentY = y;
@@ -83,6 +93,12 @@ public class ATSAgent {
         return false;
     }
 
+    /**
+     * Attempts to make a Satisfiability check. If no valid move is found, resorts to a random probe.
+     * @throws ParserException
+     * @throws ContradictionException
+     * @throws TimeoutException
+     */
     public void makeATSMove() throws ParserException, ContradictionException, TimeoutException {
         literals = new ArrayList<>();
         clauses = new ArrayList<>();
@@ -96,6 +112,12 @@ public class ATSAgent {
         }
     }
 
+    /**
+     * Loops through all literals, checking the satisifiability of each one
+     * @return true if a literal fails to satisfy the formula, false if all satisfy the formula
+     * @throws TimeoutException
+     * @throws ContradictionException
+     */
     public boolean checkSafeProbe() throws TimeoutException, ContradictionException {
         for (int n = 0; n < literals.size(); n++) {
             if (n > 0) {
@@ -139,6 +161,10 @@ public class ATSAgent {
         return false;
     }
 
+    /**
+     * Extracts cell information from given literal
+     * @param n literal index
+     */
     public void probeCell(int n) {
         Literal literal = literals.get(n);
         int x = literal.x;
@@ -152,6 +178,10 @@ public class ATSAgent {
         System.out.println(this);
     }
 
+    /**
+     * Build a list of clauses in DIMACS form in order to build SAT4J ISolver.
+     * @param cnf DIMACS KBU
+     */
     public void parseDIMACS(String cnf) {
         StringBuilder sb = new StringBuilder();
         boolean inClause = false;
@@ -201,19 +231,24 @@ public class ATSAgent {
         }
     }
 
+    /**
+     * Build CNF KBU from propositional cell formulas
+     * @return CNF in String format
+     * @throws ParserException
+     */
     public String buildKBU() throws ParserException {
         ArrayList<String> formulas = new ArrayList<>();
         for (int i = 0; i < knowledge.length; i++) {
             for (int j = 0; j < knowledge[0].length; j++) {
                 KnowledgeSpace current = knowledge[i][j];
                 if (countCoveredNeighbours(current) > 0 && !current.getValue().equals("x") && !current.getValue().equals("D")) {
-                    formulas.add(getCellFormula(current));
+                    formulas.add(getCellFormula(current));  //Get propositional logic formulas for each cell
                 }
             }
         }
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < formulas.size(); i++) {
+        for (int i = 0; i < formulas.size(); i++) {     //Build single formula (KBU)
             sb.append("(");
             sb.append(formulas.get(i));
             sb.append(")");
@@ -225,7 +260,7 @@ public class ATSAgent {
         FormulaFactory f = new FormulaFactory();
         PropositionalParser p = new PropositionalParser(f);
         Formula formula = p.parse(sb.toString());
-        String cnf = formula.cnf().toString();
+        String cnf = formula.cnf().toString();              //Convert KBU to CNF
 
         System.out.println("Unique Literals: ");
 
@@ -241,7 +276,7 @@ public class ATSAgent {
         System.out.println();
 
         boolean buildingLiteral = false;
-        for (int i = 0; i < cnf.length(); i++) {
+        for (int i = 0; i < cnf.length(); i++) {            //Converting CNF to DIMACS CNF
             char currentChar = cnf.charAt(i);
             if (currentChar == '@') {
                 buildingLiteral = true;
@@ -268,6 +303,11 @@ public class ATSAgent {
         return cnf;
     }
 
+    /**
+     * Build propositional logic formula for a given cell
+     * @param current current cell
+     * @return String containing formula for current cell
+     */
     public String getCellFormula(KnowledgeSpace current) {
         int x = current.getX();
         int y = current.getY();
@@ -296,7 +336,7 @@ public class ATSAgent {
                         }
                     }
                     if (!matchFound) {
-                        literal.name = "@RESERVED_CNF_" + literals.size();
+                        literal.name = "@RESERVED_CNF_" + literals.size();      //Must use specific naming format so LogicNG doesn't break
                         literals.add(literal);
                     }
                     vars.add(literal);
@@ -335,6 +375,10 @@ public class ATSAgent {
         return sb.toString();
     }
 
+    /**
+     * Perform a random probe
+     * @return true once a covered cell has been probed, false otherwise
+     */
     public boolean randomProbe() {
         Random r = new Random();
         int x = r.nextInt(knowledge.length);
@@ -358,6 +402,10 @@ public class ATSAgent {
         return false;
     }
 
+    /**
+     * Checks win conditions
+     * @return true if game over, false otherwise
+     */
     public boolean isComplete() {
         if (lives == 0) {
             return true;
@@ -377,6 +425,11 @@ public class ATSAgent {
         return complete;
     }
 
+    /**
+     * Reveals all neighbours of given cell
+     * @param x x-coordinate for given cell
+     * @param y y-coordinate for given cell
+     */
     public void revealNeighbours(int x, int y) {
         int xStart = Math.max(x-1, 0);
         int yStart = Math.max(y-1, 0);
@@ -395,6 +448,11 @@ public class ATSAgent {
         }
     }
 
+    /**
+     * Checks cells neighbours to see if one has the same amount of covered neighbours as daggers left to be found.
+     * @param current current cell
+     * @return true if cell is dagger, false if safe
+     */
     public boolean AllMarkedNeighbours(KnowledgeSpace current) {
         int x = current.getX();
         int y = current.getY();
@@ -423,6 +481,11 @@ public class ATSAgent {
         return false;
     }
 
+    /**
+     * Checks all cells neighbours to see if one has had all its daggers found.
+     * @param current current cell
+     * @return true if cell is certain to be safe, false otherwise
+     */
     public boolean AllFreeNeighbours(KnowledgeSpace current) {
         int x = current.getX();
         int y = current.getY();
@@ -450,6 +513,11 @@ public class ATSAgent {
         return false;
     }
 
+    /**
+     * Probes given cell
+     * @param space current cell
+     * @return true if cell is a clue, false otherwise
+     */
     public boolean inspectValue(KnowledgeSpace space) {
         if (space.getValue().equals("d")) {
             if (!space.isInspected()) {
@@ -483,6 +551,11 @@ public class ATSAgent {
         return true;
     }
 
+    /**
+     * Counts amount of covered neighbours to given cell
+     * @param space current cell
+     * @return amount of covered neighbours
+     */
     public int countCoveredNeighbours(KnowledgeSpace space) {
         int x = space.getX();
         int y = space.getY();
@@ -504,6 +577,11 @@ public class ATSAgent {
         return count;
     }
 
+    /**
+     * Counts amount of flagged neighbours to current cell
+     * @param space current cell
+     * @return amount of flagged neighbours
+     */
     public int countFlaggedNeighbours(KnowledgeSpace space) {
         int x = space.getX();
         int y = space.getY();
@@ -525,10 +603,17 @@ public class ATSAgent {
         return count;
     }
 
+    /**
+     * @return agent life count
+     */
     public int getLives() {
         return lives;
     }
 
+    /**
+     * toString override for agent
+     * @return agents current knowledge and attributes
+     */
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("========================\n");

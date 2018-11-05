@@ -10,6 +10,10 @@ public class SPSAgent {
     private int currentX, currentY;
     private int randomProbeCount = 0;
 
+    /**
+     * Constructor for SPS Agent
+     * @param map map for agent to solve.
+     */
     public SPSAgent(String[][] map) {
         this.lives = 1;
         this.map = map;
@@ -29,6 +33,12 @@ public class SPSAgent {
         this.daggersFound = 0;
     }
 
+    /**
+     * Method for agent to make single point inspection on a given cell.
+     * @param x x-coordinate for cell to be inspected
+     * @param y y-coordinate for cell to be inspected
+     * @return true if cell has been flagged or probed, false if no move was made.
+     */
     public boolean makeMove(int x, int y) {
         currentX = x;
         currentY = y;
@@ -66,6 +76,10 @@ public class SPSAgent {
         return false;
     }
 
+    /**
+     * Method to randomly probe a cell.
+     * @return true if covered cell is selected, else false.
+     */
     public boolean randomProbe() {
         Random r = new Random();
         int x = r.nextInt(knowledge.length);
@@ -89,6 +103,10 @@ public class SPSAgent {
         return false;
     }
 
+    /**
+     * Checks completeness of map.
+     * @return true if game is over, else false.
+     */
     public boolean isComplete() {
         if (lives == 0) {
             return true;
@@ -125,6 +143,11 @@ public class SPSAgent {
         return complete;
     }
 
+    /**
+     * Reveals all neighbouring cells of given cell.
+     * @param x x-coordinate of current cell
+     * @param y y-coordinate of current cell
+     */
     public void revealNeighbours(int x, int y) {
         int xStart = Math.max(x-1, 0);
         int yStart = Math.max(y-1, 0);
@@ -141,13 +164,18 @@ public class SPSAgent {
                             lives++;
                             knowledge[i][j].setInspected(true);
                         }
-                        revealNeighbours(knowledge[i][j].getX(), knowledge[i][j].getY());
+                        revealNeighbours(knowledge[i][j].getX(), knowledge[i][j].getY());   //Recursively reveals all safe cells
                     }
                 }
             }
         }
     }
 
+    /**
+     * Checks cells neighbours to see if one has the same amount of covered neighbours as daggers left to be found.
+     * @param current current cell
+     * @return true if cell is dagger, false if safe
+     */
     public boolean AllMarkedNeighbours(KnowledgeSpace current) {
         int x = current.getX();
         int y = current.getY();
@@ -166,7 +194,7 @@ public class SPSAgent {
                         int coveredNeighbours = countCoveredNeighbours(neighbour);
 
                         if (coveredNeighbours == clue - countFlaggedNeighbours(neighbour)) {
-                            return true;
+                            return true;        //Cell is a dagger. Flag it.
                         }
                     }
                 }
@@ -176,6 +204,11 @@ public class SPSAgent {
         return false;
     }
 
+    /**
+     * Checks all cells neighbours to see if one has had all its daggers found.
+     * @param current current cell
+     * @return true if cell is certain to be safe, false otherwise
+     */
     public boolean AllFreeNeighbours(KnowledgeSpace current) {
         int x = current.getX();
         int y = current.getY();
@@ -193,7 +226,7 @@ public class SPSAgent {
                         int clue = Integer.parseInt(neighbour.getValue());
 
                         if (clue == countFlaggedNeighbours(neighbour)) {
-                            return true;
+                            return true;        //Neighbouring cell already has clued amount of daggers flagged. Cell is safe.
                         }
                     }
                 }
@@ -203,6 +236,11 @@ public class SPSAgent {
         return false;
     }
 
+    /**
+     * Probes given cell
+     * @param space current cell
+     * @return true if cell is a clue, false otherwise
+     */
     public boolean inspectValue(KnowledgeSpace space) {
         if (space.getValue().equals("d")) {
             if (!space.isInspected()) {
@@ -236,6 +274,11 @@ public class SPSAgent {
         return true;
     }
 
+    /**
+     * Counts amount of covered neighbours to given cell
+     * @param space current cell
+     * @return amount of covered neighbours
+     */
     public int countCoveredNeighbours(KnowledgeSpace space) {
         int x = space.getX();
         int y = space.getY();
@@ -257,6 +300,11 @@ public class SPSAgent {
         return count;
     }
 
+    /**
+     * Counts amount of flagged neighbours to current cell
+     * @param space current cell
+     * @return amount of flagged neighbours
+     */
     public int countFlaggedNeighbours(KnowledgeSpace space) {
         int x = space.getX();
         int y = space.getY();
@@ -278,10 +326,17 @@ public class SPSAgent {
         return count;
     }
 
+    /**
+     * @return agents current life count
+     */
     public int getLives() {
         return lives;
     }
 
+    /**
+     * toString override for agent
+     * @return agents current knowledge and attributes
+     */
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("========================\n");
